@@ -10,23 +10,20 @@ import { INSTAGRAM } from "@/components/Header";
 
 type Tile = { src: string; w: number; h: number; slug: string; alt: string; x: number; y: number; size: number; speed: number; over?: boolean };
 
-// Desktop placement: x in % of width, y in vh, size in vw. Phones fall back to a two-column stagger.
+// Shoot photos only (the lookbooks). Desktop placement: x in % of width, y in vh, size in vw.
+// Phones fall back to a two-column stagger.
 const TILES: Tile[] = [
   { src: "identity/look-1", w: 896, h: 1344, slug: "identity", alt: "Long black dress against a green panelled wall", x: 5, y: 12, size: 15, speed: 0.15 },
   { src: "play/look-1", w: 934, h: 1400, slug: "play", alt: "Circle-print chiffon set on a gilded sofa", x: 66, y: 18, size: 17, speed: -0.1 },
-  { src: "play/cover", w: 853, h: 1280, slug: "play", alt: "Printed garments on a rooftop washing line", x: 89, y: 2, size: 13, speed: 0.3, over: true },
+  { src: "play/look-4", w: 934, h: 1400, slug: "play", alt: "Leaning back on a gilded sofa, one arm raised, in the circle-print set", x: 89, y: 2, size: 13, speed: 0.3, over: true },
   { src: "identity/look-2", w: 853, h: 1280, slug: "identity", alt: "Open back of the black dress", x: 21, y: 58, size: 13, speed: 0.35, over: true },
-  { src: "play/fabrics", w: 979, h: 693, slug: "play", alt: "Fabric board of prints and stripes", x: 42, y: 84, size: 18, speed: 0.05 },
   { src: "play/look-3", w: 934, h: 1400, slug: "play", alt: "Circle-print kimono and trousers", x: 73, y: 70, size: 14, speed: 0.3, over: true },
-  { src: "identity/flats", w: 880, h: 1094, slug: "identity", alt: "Illustration of the black dress, front and back", x: 2, y: 104, size: 13, speed: 0.2 },
   { src: "play/look-2", w: 934, h: 1400, slug: "play", alt: "Circle-print set on a rooftop with a parasol", x: 30, y: 132, size: 15, speed: -0.05 },
-  { src: "cairona/tees", w: 1130, h: 1600, slug: "cairona", alt: "Cairona capsule tees", x: 60, y: 126, size: 15, speed: 0.25, over: true },
   { src: "identity/look-4", w: 896, h: 1344, slug: "identity", alt: "Crouching in the draped black dress", x: 85, y: 116, size: 12, speed: 0.1 },
-  { src: "play/collection", w: 1166, h: 1375, slug: "play", alt: "Illustrated Play collection line-up", x: 9, y: 170, size: 16, speed: 0.3, over: true },
+  { src: "identity/look-3", w: 896, h: 1344, slug: "identity", alt: "Black dress under a crystal chandelier", x: 6, y: 168, size: 15, speed: 0.25, over: true },
   { src: "play/look-5", w: 934, h: 1400, slug: "play", alt: "Orange halter top in a wooden doorway", x: 45, y: 190, size: 14, speed: 0.15 },
   { src: "identity/look-5", w: 896, h: 1344, slug: "identity", alt: "Black dress in warm lamplight", x: 22, y: 230, size: 14, speed: 0.2, over: true },
-  { src: "play/look-6", w: 934, h: 1400, slug: "play", alt: "Crouching on a blue patterned rug", x: 58, y: 244, size: 16, speed: 0.1 },
-  { src: "barraserb/designs", w: 1130, h: 1600, slug: "barraserb", alt: "Barraserb T-shirt designs", x: 84, y: 232, size: 13, speed: 0.25, over: true },
+  { src: "play/look-6", w: 934, h: 1400, slug: "play", alt: "Crouching on a blue patterned rug", x: 70, y: 216, size: 16, speed: 0.1 },
 ];
 
 // Phones: two staggered columns, with the middle of the first screen left clear for the nav.

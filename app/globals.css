@@ -369,8 +369,8 @@ html.is-loading .header-mark {
 }
 .about-text {
   font-weight: 800;
-  font-size: clamp(1.4rem, 3.8vw, 4rem);
-  line-height: 1.02;
+  font-size: clamp(1.05rem, 1.75vw, 1.9rem);
+  line-height: 1.15;
   text-transform: uppercase;
   text-wrap: balance;
 }
@@ -397,7 +397,7 @@ html.is-loading .header-mark {
 
 @media (max-width: 767px) {
   .wall {
-    height: 420vh;
+    height: 340vh; /* 11 tiles in the two-column stagger, plus the same tail as before */
   }
   .tile {
     left: var(--mx);
