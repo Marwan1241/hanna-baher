@@ -47,11 +47,11 @@ def sample(page: int, pts) -> list[str]:
 
 # --- lookbook photos (her own work) --------------------------------------
 PHOTOS = {
-    "identity/look-1": 647, "identity/look-2": 660, "identity/look-3": 659,
-    "identity/look-4": 666, "identity/look-5": 667,
-    "play/cover": 672, "play/look-1": 712, "play/look-2": 714, "play/look-3": 720,
-    "play/look-4": 721, "play/look-5": 727, "play/look-6": 728,
-    "bio/studio": 601,
+    "identity/look-1": 600, "identity/look-2": 613, "identity/look-3": 612,
+    "identity/look-4": 619, "identity/look-5": 620,
+    "play/cover": 625, "play/look-1": 665, "play/look-2": 667, "play/look-3": 673,
+    "play/look-4": 674, "play/look-5": 680, "play/look-6": 681,
+    "bio/studio": 554,
 }
 for name, x in PHOTOS.items():
     img = xref(x)
@@ -60,48 +60,84 @@ for name, x in PHOTOS.items():
         save(img, f"loader/{name.replace('/', '-')}.webp", max_side=600, q=70)
 
 # --- book pages: every PDF half-page, as designed --------------------------
-# Fixes applied in memory only: the PDF misspells "Hanna" (drop the trailing h), and Autovroom is out of the archive.
-for page in PDF:
+# Fixes applied in memory only: the PDF misspells "Hanna" (drop the trailing h), and Autovroom is out of the archive
+# (its stale running header is still on the closing pages).
+GAPS: dict[int, list] = {}  # page index -> [(y0, y1, [(word x0, x1, shift left)])]: words to slide into a removed h
+for p, page in enumerate(PDF):
     for block in page.get_text("rawdict")["blocks"]:
         for line in block.get("lines", []):
+            chars = [c for span in line["spans"] for c in span["chars"]]
+            text = "".join(c["c"] for c in chars).lower()
+            for k in range(len(text) - 5):
+                if text[k:k + 6] == "hannah":
+                    page.add_redact_annot(pymupdf.Rect(chars[k + 5]["bbox"]), fill=False)
+                    # Mid-line, the missing h leaves a hole: spread its width over the line's word gaps so justified
+                    # text stays flush. A single trailing word (signatures, headers) gets no shift.
+                    rest = chars[k + 6:]
+                    if rest:
+                        w = rest[0]["origin"][0] - chars[k + 5]["origin"][0]
+                        words, cur = [], []
+                        for c in rest + [{"c": " "}]:
+                            if c["c"] == " ":
+                                if cur:
+                                    words.append((cur[0]["bbox"][0], cur[-1]["bbox"][2]))
+                                cur = []
+                            else:
+                                cur.append(c)
+                        m = len(words)
+                        GAPS.setdefault(p, []).append(
+                            (line["bbox"][1], line["bbox"][3], [(x0, x1, w * (m - 1 - j) / m) for j, (x0, x1) in enumerate(words)])
+                        )
             for span in line["spans"]:
-                text = "".join(c["c"] for c in span["chars"]).lower()
-                for k in range(len(text) - 5):
-                    if text[k:k + 6] == "hannah":
-                        page.add_redact_annot(pymupdf.Rect(span["chars"][k + 5]["bbox"]), fill=False)
+                if "autovroom" in "".join(c["c"] for c in span["chars"]).lower():
+                    page.add_redact_annot(pymupdf.Rect(span["bbox"]), fill=False)
     page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_NONE, graphics=pymupdf.PDF_REDACT_LINE_ART_NONE)
-PDF[1].draw_rect(pymupdf.Rect(640, 565, 1000, 790), color=None, fill=(1, 1, 1))  # "06 Autovroom" contents entry
-PDF[18].delete_image(801)  # Autovroom page's black ground, which bleeds past the spine onto the closing page
+print("gap fixes (page: words shifted)", {p + 1: [sum(s > 0 for *_, s in w) for *_, w in v] for p, v in GAPS.items()})
+
+
+def close_gaps(img: Image.Image, p: int, rect, zoom: float) -> Image.Image:
+    # shortcut: assumes a flat background behind the line (true for the bio page); re-check if the name lands on a photo.
+    for y0, y1, words in GAPS.get(p, []):
+        words = [(x0, x1, s) for x0, x1, s in words if rect[0] <= x0 and x1 <= rect[2] and s > 0]
+        if not words:
+            continue
+        px = lambda v, o: round((v - o) * zoom)
+        top, bot = px(y0, rect[1]), px(y1, rect[1])
+        strips = [(img.crop((px(x0, rect[0]), top, px(x1, rect[0]) + 1, bot)), px(x0 - s, rect[0])) for x0, x1, s in words]
+        bg = img.getpixel((max(0, px(words[0][0], rect[0]) - 2), top + 1))
+        img.paste(bg, (px(words[0][0], rect[0]) - px(words[0][2], 0), top, px(words[-1][1], rect[0]) + 1, bot))
+        for strip, x in strips:
+            img.paste(strip, (x, top))
+    return img
+
 
 for s in range(len(PDF)):
     for h, rect in enumerate((HALF_L, HALF_R)):
-        n = 2 * s + h + 1
-        if n != 37:  # Autovroom
-            save(plate(s + 1, rect, zoom=2), f"archive/pages/{n:02}.webp", max_side=1700)
+        save(close_gaps(plate(s + 1, rect, zoom=2), s, rect, 2), f"archive/pages/{2 * s + h + 1:02}.webp", max_side=1700)
 
 # --- plates (composites rasterized from the page) -------------------------
 PLATES = {
-    "identity/reference": (4, HALF_R),
-    "identity/moodboard": (5, HALF_L),
-    "identity/sketches": (5, HALF_R),
-    "identity/flats": (6, (100, 228, 500, 725)),
-    "play/title": (9, HALF_L),
-    "play/moodboard": (9, (630, 355, 1145, 485)),
-    "play/fabrics": (10, (675, 280, 1120, 595)),
-    "play/collection": (11, (30, 110, 560, 735)),
-    "play/final": (11, (670, 244, 1075, 670)),
-    "cairona/poster": (15, HALF_L),
-    "cairona/tees": (16, HALF_L),
-    "cairona/hoodies": (16, HALF_R),
-    "cairona/stickers": (17, (10, 330, 585, 510)),
-    "cairona/mailer": (17, (750, 280, 1030, 600)),
-    "barraserb/designs": (18, HALF_R),
+    "identity/reference": (3, HALF_R),
+    "identity/moodboard": (4, HALF_L),
+    "identity/sketches": (4, HALF_R),
+    "identity/flats": (5, (100, 228, 500, 725)),
+    "play/title": (8, HALF_L),
+    "play/moodboard": (8, (630, 355, 1145, 485)),
+    "play/fabrics": (9, (675, 280, 1120, 595)),
+    "play/collection": (10, (30, 110, 560, 735)),
+    "play/final": (10, (670, 244, 1075, 670)),
+    "cairona/poster": (14, HALF_L),
+    "cairona/tees": (15, HALF_L),
+    "cairona/hoodies": (15, HALF_R),
+    "cairona/stickers": (16, (10, 330, 585, 510)),
+    "cairona/mailer": (16, (750, 280, 1030, 600)),
+    "barraserb/designs": (17, HALF_R),
 }
 for name, (page, rect) in PLATES.items():
     save(plate(page, rect), f"archive/{name}.webp", max_side=1600)
 
-print("play palette   ", sample(10, [(76, 428), (165, 428), (255, 428), (342, 428), (431, 428), (522, 428)]))
-print("cairona palette", sample(15, [(693, 435), (767, 435), (841, 435), (917, 435), (999, 435), (1080, 435)]))
+print("play palette   ", sample(9, [(76, 428), (165, 428), (255, 428), (342, 428), (431, 428), (522, 428)]))
+print("cairona palette", sample(14, [(693, 435), (767, 435), (841, 435), (917, 435), (999, 435), (1080, 435)]))
 
 
 # --- textures: patch the mark out with a nearby swatch of the same weave ----

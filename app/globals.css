@@ -164,17 +164,19 @@ html.is-loading .header-mark {
   position: fixed;
   inset: 0;
   z-index: 2;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: clamp(14px, 2.2vw, 30px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9em;
+  font-size: clamp(15px, 1.15vw, 18px); /* THE ARCHIVE and THE HOUSE share one font */
   color: #fff;
   mix-blend-mode: difference;
   pointer-events: none;
   text-align: center;
 }
 /* On hover the nav leaves difference mode so the purple roll reads true. */
-.home-nav:has(.archive-link:focus-visible) {
+.home-nav:has(.archive-link:focus-visible),
+.home-nav:has(.house.is-soon) {
   mix-blend-mode: normal;
   color: var(--ink);
 }
@@ -190,19 +192,20 @@ html.is-loading .header-mark {
     transform: none;
   }
 }
-.archive-link {
+.archive-link,
+.house {
   position: relative;
   pointer-events: auto;
   display: block;
   font-weight: 800;
-  font-size: clamp(2.6rem, 12vw, 13rem);
-  line-height: 0.82;
-  letter-spacing: -0.01em;
+  line-height: 1;
+  letter-spacing: 0.06em;
 }
 .roll {
   display: grid;
   overflow: hidden;
-  padding: 0.05em 0.02em 0.01em;
+  padding: 0.05em 0 0.01em;
+  margin-right: -0.06em; /* cancel trailing tracking so the word and underline stay centred */
 }
 .roll-a,
 .roll-b {
@@ -236,10 +239,10 @@ html.is-loading .header-mark {
 /* Clickable cue: a plain underline under the word. */
 .archive-line {
   position: absolute;
-  left: 0.02em;
-  right: 0.02em;
-  bottom: -0.02em;
-  height: max(2px, 0.05em);
+  left: 0;
+  right: 0;
+  bottom: -0.15em;
+  height: 1px;
   background: currentColor;
 }
 @media (hover: hover) {
@@ -251,33 +254,42 @@ html.is-loading .header-mark {
   background: var(--purple);
 }
 
-/* The House: present, dimmed, deliberately inert. */
+.nav-dot {
+  width: 0.26em;
+  height: 0.26em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* The House is not open yet: a press rolls it to "Coming soon". */
 .house {
-  display: grid;
-  justify-items: center;
-  gap: 0.7em;
-  opacity: 0.28;
-  pointer-events: none;
-  user-select: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.house-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28em;
-  font-weight: 800;
-  font-size: clamp(1.3rem, 3.6vw, 3.1rem);
-  line-height: 1;
-  text-transform: uppercase;
+/* The button hugs "THE HOUSE"; the wider "COMING SOON" spills right, so the row stays centred. */
+.house .roll {
+  overflow: visible;
 }
-.house-name svg {
-  width: 0.9em;
-  height: 0.9em;
-  translate: 0 -0.04em;
+.house .roll-a,
+.house .roll-b {
+  overflow: hidden;
 }
-.house-soon {
-  font-size: 9px;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
+.house .roll-b {
+  justify-self: start;
+  text-align: left;
+  margin-right: -10em;
+}
+.house.is-soon .roll-a .char {
+  transform: translateY(-105%);
+}
+.house.is-soon .roll-b .char {
+  transform: none;
 }
 
 /* ---------- home: wall ---------- */

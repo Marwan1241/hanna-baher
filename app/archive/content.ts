@@ -4,23 +4,25 @@
 export type Page = { kind: "cover" | "back" | "blank" } | { kind: "pdf"; src: string; alt: string };
 
 export const bio =
-  "I’m a 21-year-old fashion designer and student at the German International University, exploring fashion through experimentation with different concepts, styles and visual languages. My design identity lies in the balance between chaos and calm — combining bold, unexpected elements with a sense of simplicity and control.";
+  "I’m Hanna Baher, a designer based in Cairo working across fashion design and creative direction. I experiment with different styles and visual languages, drawn to the space between chaos and calm and to how an idea changes as it takes on a new form. I started The H as an experimental creative house to share that process: the things I notice, the things I make, and the work I keep coming back to.";
+
+// Home About copy, as Hanna worded it for the site. `bio` must keep matching the PDF's biography page.
+export const about =
+  "Designer based in Cairo working across fashion design and creative direction. I experiment with different styles and visual languages, drawn to the space between chaos and calm and to how an idea changes as it takes on a new form. I started The H as an experimental creative house to share that process: the things I notice, the things I make, and the work I keep coming back to.";
 
 // Chapters as numbered on the PDF's contents page; `start` is the left page each one opens on.
 export const chapters = [
-  { slug: "biography", no: "01", title: "Biography", start: 5 },
-  { slug: "identity", no: "02", title: "Immersing Identity", start: 7 },
-  { slug: "play", no: "03", title: "Play", start: 17 },
-  { slug: "cairona", no: "04", title: "Cairona", start: 29 },
-  { slug: "barraserb", no: "05", title: "Barraserb", start: 35 },
+  { slug: "biography", no: "01", title: "Biography", start: 3 },
+  { slug: "identity", no: "02", title: "Immersing Identity", start: 5 },
+  { slug: "play", no: "03", title: "Play", start: 15 },
+  { slug: "cairona", no: "04", title: "Cairona", start: 27 },
+  { slug: "barraserb", no: "05", title: "Barraserb", start: 33 },
 ];
 /** First page after the last chapter (the closing pages): no chapter is active from here. */
-export const END = 37;
+export const END = 35;
 
 const lookbook = "Lookbook — model ";
 const ALTS: (string | null)[] = [
-  "Cover: a black-and-white rooftop photo signed “by Hanna Baher”. Hanna Baher — Visual Studies, Fashion Design, 2026",
-  "Hanna Baher — Visual Studies, Fashion Design, 2026",
   "Table of contents: 01 Biography, 02 Immersing Identity, 03 Play",
   "Table of contents: 04 Cairona, 05 Barraserb",
   `Biography. ${bio}`,
@@ -55,7 +57,7 @@ const ALTS: (string | null)[] = [
   "Packing paper mailer: a kraft envelope covered in Cairona stickers",
   "Barraserb. Barraserb (BRSRB) is an Egyptian/MENA streetwear brand founded in 2023 by Egyptian rapper Marwan Pablo and creative/stylist Xander Ghost, known for oversized silhouettes, graphic prints, Arabic typography, distorted graphics and deconstructed elements. I designed a series of T-shirts for them, following the brand identity.",
   "Designs: three Barraserb T-shirt designs, front and back, with Arabic typography",
-  null, // Autovroom, removed from the archive: left blank so every other spread stays as in the PDF
+  "THE H monogram in purple on a white page",
   "This portfolio is a collection of ideas, experiments, projects and moments of discovery throughout my journey in fashion. Each project reflects a different way of thinking, creating and seeing. As I continue to explore and evolve, I see every design as another step toward defining my own visual language. Thank you for stepping into my world. — Hanna Baher",
 ];
 

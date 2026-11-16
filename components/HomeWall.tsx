@@ -3,9 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
-import { bio, chapters } from "@/app/archive/content";
+import { about, chapters } from "@/app/archive/content";
 import { INSTAGRAM } from "@/components/Header";
 
 type Tile = { src: string; w: number; h: number; slug: string; alt: string; x: number; y: number; size: number; speed: number; over?: boolean };
@@ -45,6 +45,15 @@ export default function HomeWall() {
   const router = useRouter();
   const root = useRef<HTMLDivElement>(null);
 
+  // The House isn't open yet: a press rolls it to "Coming soon", then back.
+  const [soon, setSoon] = useState(false);
+  const soonTimer = useRef<number>(undefined);
+  const showSoon = () => {
+    setSoon(true);
+    clearTimeout(soonTimer.current);
+    soonTimer.current = window.setTimeout(() => setSoon(false), 2200);
+  };
+
   const { contextSafe } = useGSAP(
     () => {
       const mm = gsap.matchMedia();
@@ -54,7 +63,7 @@ export default function HomeWall() {
         intro
           .from(".roll-a .ch", { yPercent: 110, duration: motion ? 1.1 : 0.01, stagger: 0.03, clearProps: "transform" })
           .from(".archive-line", { scaleX: 0, transformOrigin: "left", duration: motion ? 1 : 0.01, ease: "expo.inOut" }, "-=0.8")
-          .from(".house", { autoAlpha: 0, y: 16, duration: 0.8 }, "-=0.7")
+          .from(".nav-dot", { autoAlpha: 0, scale: 0, duration: 0.8 }, "-=0.7")
           .from(".tile-inner", { autoAlpha: 0, scale: motion ? 0.9 : 1, duration: 1.2, stagger: { each: 0.05, from: "random" } }, 0.1);
 
         const play = () => intro.play();
@@ -104,7 +113,7 @@ export default function HomeWall() {
     gsap
       .timeline({ defaults: { ease: "power3.in" }, onComplete: () => router.push(href) })
       .to(".roll .ch", { yPercent: -110, duration: 0.5, stagger: 0.015 }, 0)
-      .to(".house", { autoAlpha: 0, duration: 0.3 }, 0)
+      .to(".nav-dot", { autoAlpha: 0, duration: 0.3 }, 0)
       .to(".archive-line", { scaleX: 0, transformOrigin: "right", duration: 0.45 }, 0)
       .to(
         ".tile-inner",
@@ -173,15 +182,16 @@ export default function HomeWall() {
           <span className="sr-only">The Archive</span>
           <span className="archive-line" aria-hidden />
         </Link>
-        <p className="house">
-          <span className="house-name">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-              <path d="M3.5 10.5 12 3.5l8.5 7M6.5 8.6v11.9M17.5 8.6v11.9M6.5 14.5h11" />
-            </svg>
-            The House
+        <span className="nav-dot" aria-hidden />
+        <button type="button" className={soon ? "house is-soon" : "house"} onClick={showSoon}>
+          <span className="roll" aria-hidden>
+            <span className="roll-a">{roll("THE HOUSE")}</span>
+            <span className="roll-b">{roll("COMING SOON")}</span>
           </span>
-          <span className="house-soon">Coming soon</span>
-        </p>
+          <span className="sr-only" aria-live="polite">
+            {soon ? "The House, coming soon" : "The House"}
+          </span>
+        </button>
       </nav>
 
       <div className="wall">
@@ -193,7 +203,7 @@ export default function HomeWall() {
         <p className="label">(Welcome)</p>
         <div className="about-grid">
           <Image className="about-img" src="/archive/bio/studio.webp" alt="Tailor’s scissors and a spool of thread in the studio" width={600} height={840} sizes="(min-width: 768px) 16vw, 40vw" />
-          <h2 className="about-text">{bio}</h2>
+          <h2 className="about-text">{about}</h2>
         </div>
         <footer className="home-foot">
           <a className="foot-big" href={INSTAGRAM} target="_blank" rel="noopener noreferrer">
