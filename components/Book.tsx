@@ -2,85 +2,50 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { book, chapters, END, type Page } from "@/app/archive/content";
 
 const { pages, starts } = book;
-// Spreads on wide screens and on landscape phones; single pages on portrait phones/tablets.
-const WIDE = "(min-width: 900px), (orientation: landscape) and (min-width: 640px)";
 const pad = (n: number) => String(n).padStart(2, "0");
 
-function useWide() {
-  return useSyncExternalStore(
-    (cb) => {
-      const m = matchMedia(WIDE);
-      m.addEventListener("change", cb);
-      return () => m.removeEventListener("change", cb);
-    },
-    () => matchMedia(WIDE).matches,
-    () => true,
-  );
-}
-
-// Spread: leaf i = pages [2i, 2i+1]. Single: leaf i = page i (its back is a plain lining).
-const leavesFor = (wide: boolean) =>
-  wide ? Array.from({ length: pages.length / 2 }, (_, i) => [2 * i, 2 * i + 1]) : pages.map((_, i) => [i, -1]);
-const maxFor = (wide: boolean) => (wide ? pages.length / 2 : pages.length - 1);
-const leafFor = (page: number, wide: boolean) => (wide ? Math.ceil(page / 2) : page);
+// Always two-page spreads: leaf i = pages [2i, 2i+1]. MAX = every leaf turned (back cover).
+const MAX = pages.length / 2;
+const leaves = Array.from({ length: MAX }, (_, i) => [2 * i, 2 * i + 1]);
+const leafFor = (page: number) => Math.ceil(page / 2);
 
 export default function Book() {
   const router = useRouter();
-  const wide = useWide();
   const root = useRef<HTMLDivElement>(null);
   const bookEl = useRef<HTMLDivElement>(null);
   const curRef = useRef(0);
-  const wideRef = useRef(wide);
   const reduce = useRef(false);
   const [cur, setCur] = useState(0);
-  const leaves = leavesFor(wide);
+  const [zoom, setZoom] = useState<{ idx: number; from: DOMRect } | null>(null);
 
   const leafEls = () => gsap.utils.toArray<HTMLElement>(".leaf", bookEl.current);
 
   // z-order: resting leaves stack right (n-i) or left (i); flying leaves sit above all of them.
   const paint = (el: HTMLElement, i: number, flying: boolean) => {
-    const n = el.parentElement?.childElementCount;
-    if (!n) return; // leaf from the previous layout mode, already unmounted
     const rot = gsap.getProperty(el, "rotationY") as number;
-    el.style.zIndex = String((flying ? 2 * n : 0) + (rot < -90 ? i + 1 : n - i));
+    el.style.zIndex = String((flying ? 2 * MAX : 0) + (rot < -90 ? i + 1 : MAX - i));
     el.style.setProperty("--shade", String(Math.sin((-rot * Math.PI) / 180) * 0.35));
     // Leaves are flat and show one face at a time: Safari mis-draws preserve-3d + backface-visibility (blank pages on iPhone).
     el.toggleAttribute("data-turned", rot < -90);
-    // Only leaves near the open page or in flight are drawn; ~80 full-page layers stall iOS Safari.
-    el.style.display = flying || Math.abs(i - curRef.current) <= 2 ? "" : "none";
-    if (!wideRef.current) el.style.opacity = String(gsap.utils.clamp(0, 1, (180 + rot) / 60));
+    // Only the two pages under each side and leaves in flight are drawn; dozens of full-page layers stall iOS Safari.
+    el.style.display = flying || (i >= curRef.current - 2 && i <= curRef.current + 1) ? "" : "none";
   };
 
-  const shift = (c: number) => (wideRef.current ? (c === 0 ? -25 : c === maxFor(true) ? 25 : 0) : 0);
+  // The closed book (cover or back) is one page wide, so centre it.
+  const shift = (c: number) => (c === 0 ? -25 : c === MAX ? 25 : 0);
 
   const layout = () => {
     leafEls().forEach((el, i) => {
-      gsap.set(el, { rotationY: i < curRef.current ? -180 : 0, transformPerspective: 2400, transformOrigin: "left center" });
+      gsap.set(el, { rotationY: i < curRef.current ? -180 : 0, z: 0, transformPerspective: 2400, transformOrigin: "left center" });
       paint(el, i, false);
     });
     gsap.set(bookEl.current, { xPercent: shift(curRef.current) });
   };
-
-  // Re-stack whenever the layout mode changes, keeping the same page open.
-  const prevWide = useRef(wide);
-  useGSAP(
-    () => {
-      wideRef.current = wide;
-      if (prevWide.current !== wide) {
-        const page = prevWide.current ? curRef.current * 2 : curRef.current;
-        curRef.current = Math.min(leafFor(page, wide), maxFor(wide));
-        prevWide.current = wide;
-        setCur(curRef.current);
-      }
-      layout();
-    },
-    { dependencies: [wide], scope: root },
-  );
 
   // Turning and closing live inside the GSAP context (so Activity/unmount reverts them); handlers reach them via this ref.
   const api = useRef<{ flipTo: (n: number) => void; close: () => void }>({ flipTo: () => {}, close: () => {} });
@@ -89,7 +54,7 @@ export default function Book() {
   useGSAP(
     (_, contextSafe) => {
       const flipTo = contextSafe!((target: number) => {
-        const to = gsap.utils.clamp(0, maxFor(wideRef.current), target);
+        const to = gsap.utils.clamp(0, MAX, target);
         const from = curRef.current;
         if (to === from) return;
         const fwd = to > from;
@@ -97,22 +62,26 @@ export default function Book() {
         // Leaves to turn, in the order they lift off the stack.
         const list = fwd ? Array.from({ length: to - from }, (_, k) => from + k) : Array.from({ length: from - to }, (_, k) => from - 1 - k);
         const stagger = Math.min(0.08, 0.6 / list.length);
+        const duration = reduce.current ? 0 : list.length > 1 ? 0.8 : 1.15;
         list.forEach((i, k) => {
           const el = els[i];
+          const delay = reduce.current ? 0 : k * stagger;
+          // Slow lift, quick pass edge-on, slow settle; the page rises off the stack mid-turn.
           gsap.to(el, {
             rotationY: fwd ? -180 : 0,
-            duration: reduce.current ? 0 : list.length > 1 ? 0.8 : 1,
-            delay: reduce.current ? 0 : k * stagger,
-            ease: "power2.inOut",
+            duration,
+            delay,
+            ease: "power3.inOut",
             overwrite: "auto",
             onUpdate: () => paint(el, i, true),
             onComplete: () => paint(el, i, false),
           });
+          if (duration) gsap.to(el, { z: 60, duration: duration / 2, delay, ease: "sine.out", yoyo: true, yoyoEase: "sine.in", repeat: 1, overwrite: "auto" });
         });
         curRef.current = to;
         els.forEach((el, i) => paint(el, i, list.includes(i) || gsap.isTweening(el))); // reveal the target, lift the leaves about to turn
         setCur(to);
-        gsap.to(bookEl.current, { xPercent: shift(to), duration: reduce.current ? 0 : 1, ease: "power2.inOut", overwrite: "auto" });
+        gsap.to(bookEl.current, { xPercent: shift(to), duration: duration || 0, ease: "power3.inOut", overwrite: "auto" });
       });
 
       const close = contextSafe!(() => {
@@ -130,7 +99,7 @@ export default function Book() {
       });
       api.current = { flipTo, close };
 
-      // Intro: the closed book rises off the table, then opens to the index (or riffles to #chapter).
+      // Intro: the closed book rises off the table, then opens onto the PDF's first spread (or riffles to #chapter).
       reduce.current = matchMedia("(prefers-reduced-motion: reduce)").matches;
       curRef.current = 0;
       setCur(0);
@@ -143,10 +112,10 @@ export default function Book() {
         0.2,
       )
         .from(".rail", { autoAlpha: 0, y: 20, duration: 0.6, ease: "power2.out" }, "-=0.6")
-        .call(() => flipTo(leafFor(1, wideRef.current)), [], "-=0.2"); // open on the PDF's first spread
+        .call(() => flipTo(leafFor(1)), [], "-=0.2");
       const toHash = () => {
         const slug = location.hash.slice(1);
-        if (starts[slug] !== undefined) flipTo(leafFor(starts[slug], wideRef.current));
+        if (starts[slug] !== undefined) flipTo(leafFor(starts[slug]));
       };
       if (starts[location.hash.slice(1)] !== undefined) tl.call(toHash, [], "+=1");
 
@@ -171,28 +140,19 @@ export default function Book() {
     { scope: root },
   );
 
-  // Pointer: click a half to turn, swipe to turn.
+  // Pointer: swipe to turn; tap a page to zoom into it on touch screens, or to turn it with a mouse.
   const down = useRef<number | null>(null);
   const swiped = useRef(false);
-  const edge = (el: HTMLElement) => {
-    const r = el.getBoundingClientRect();
-    return r.left + r.width * (wide ? 0.5 : 0.3);
+  const isLeft = (x: number) => {
+    const r = bookEl.current!.getBoundingClientRect();
+    return x < r.left + r.width / 2;
   };
 
-  const jump = (slug: string) => flipTo(leafFor(starts[slug], wide));
+  const jump = (slug: string) => flipTo(leafFor(starts[slug]));
 
-  const pageNow = wide ? Math.max(0, 2 * cur - 1) : cur;
+  const pageNow = Math.max(0, 2 * cur - 1);
   const active = pageNow < END ? [...chapters].reverse().find((c) => starts[c.slug] <= pageNow) : undefined;
-  const max = maxFor(wide);
-  const label = wide
-    ? cur === 0
-      ? "Cover"
-      : cur === max
-        ? "Back cover"
-        : `${pad(2 * cur - 1)}–${pad(2 * cur)} / ${pages.length - 1}`
-    : cur === 0
-      ? "Cover"
-      : `${pad(cur)} / ${pages.length - 1}`;
+  const label = cur === 0 ? "Cover" : cur === MAX ? "Back cover" : `${pad(2 * cur - 1)}–${pad(2 * cur)} / ${pages.length - 1}`;
 
   return (
     <div className="archive" ref={root}>
@@ -213,24 +173,29 @@ export default function Book() {
           }
         }}
         onPointerMove={(e) => {
-          e.currentTarget.dataset.side = e.clientX < edge(e.currentTarget) ? "prev" : "next";
+          e.currentTarget.dataset.side = isLeft(e.clientX) ? "prev" : "next";
         }}
         onClick={(e) => {
           if (swiped.current || (e.target as HTMLElement).closest("button, a")) return;
-          flipTo(curRef.current + (e.clientX < edge(e.currentTarget) ? -1 : 1));
+          const left = isLeft(e.clientX);
+          const idx = left ? 2 * curRef.current - 1 : 2 * curRef.current;
+          if (matchMedia("(pointer: coarse)").matches && pages[idx]?.kind === "pdf") {
+            const r = bookEl.current!.getBoundingClientRect();
+            setZoom({ idx, from: new DOMRect(left ? r.left : r.left + r.width / 2, r.top, r.width / 2, r.height) });
+          } else flipTo(curRef.current + (left ? -1 : 1));
         }}
       >
-        <div className="book" ref={bookEl} data-mode={wide ? "spread" : "single"}>
+        <div className="book" ref={bookEl}>
           {leaves.map(([front, back], i) => {
-            const near = wide ? i >= cur - 3 && i <= cur + 2 : Math.abs(i - cur) <= 2;
+            const near = i >= cur - 3 && i <= cur + 2;
             return (
-              <div className="leaf" key={`${wide}-${i}`}>
+              <div className="leaf" key={i}>
                 <div className="face front">
                   <Face page={pages[front]} near={near} />
                   <i className="shade" />
                 </div>
                 <div className="face back">
-                  {back < 0 ? <div className="pg" /> : <Face page={pages[back]} near={near} />}
+                  <Face page={pages[back]} near={near} />
                   <i className="shade" />
                 </div>
               </div>
@@ -257,13 +222,58 @@ export default function Book() {
           {label}
           {active && <span className="sr-only"> — {active.title}</span>}
         </p>
-        <button type="button" className="rail-arrow next" onClick={() => flipTo(cur + 1)} disabled={cur === max} aria-label="Next page">
+        <button type="button" className="rail-arrow next" onClick={() => flipTo(cur + 1)} disabled={cur === MAX} aria-label="Next page">
           →
         </button>
         <button type="button" className="rail-close" onClick={() => api.current.close()}>
           Close ✕
         </button>
       </nav>
+
+      {zoom && <Zoom page={pages[zoom.idx]} from={zoom.from} onClose={() => setZoom(null)} />}
+    </div>
+  );
+}
+
+/** One page blown up to fill the screen, growing out of where it sits in the book. Tap, ✕ or Esc closes it. */
+function Zoom({ page, from, onClose }: { page: Page; from: DOMRect; onClose: () => void }) {
+  const root = useRef<HTMLDivElement>(null);
+  useGSAP(
+    () => {
+      const to = root.current!.querySelector(".zoom-page")!.getBoundingClientRect();
+      gsap.from(".zoom-page", {
+        x: from.left + from.width / 2 - (to.left + to.width / 2),
+        y: from.top + from.height / 2 - (to.top + to.height / 2),
+        scale: from.width / to.width,
+        duration: 0.6,
+        ease: "expo.out",
+      });
+      gsap.from(root.current, { backgroundColor: "rgb(245 244 240 / 0)", duration: 0.4 });
+      gsap.from(".zoom-close", { autoAlpha: 0, duration: 0.3, delay: 0.3 });
+    },
+    { scope: root },
+  );
+  const close = () => gsap.to(root.current, { autoAlpha: 0, duration: 0.25, onComplete: onClose });
+
+  useGSAP(() => {
+    // Capture phase, so Esc closes the zoom and not the whole book.
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      close();
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  });
+
+  return (
+    <div className="zoom" ref={root} role="dialog" aria-modal="true" aria-label="Zoomed page" onClick={close}>
+      <div className="zoom-page">
+        {page.kind === "pdf" && <Image src={page.src} alt={page.alt} fill sizes="100vw" className="object-contain" />}
+      </div>
+      <button type="button" className="zoom-close" autoFocus>
+        Close ✕
+      </button>
     </div>
   );
 }
@@ -284,7 +294,7 @@ function Face({ page, near }: { page: Page; near: boolean }) {
     case "pdf":
       return (
         <div className="pg">
-          {near && <Image src={page.src} alt={page.alt} fill sizes="(min-width: 900px) 36vw, 90vw" className="object-cover" />}
+          {near && <Image src={page.src} alt={page.alt} fill sizes="(min-width: 900px) 36vw, 50vw" className="object-cover" />}
         </div>
       );
     default:

@@ -48,7 +48,6 @@ export default function Loader() {
               x: target.left + target.width / 2 - (from.left + from.width / 2),
               y: target.top + target.height / 2 - (from.top + from.height / 2),
               scale: target.width / from.width,
-              color: "#0b0b0b", // lands as the header's dark mark
               duration: 1.1,
               ease: "expo.inOut",
             },

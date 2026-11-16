@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRef, type CSSProperties } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { bio, chapters } from "@/app/archive/content";
-import { EMAIL } from "@/components/Header";
+import { INSTAGRAM } from "@/components/Header";
 
 type Tile = { src: string; w: number; h: number; slug: string; alt: string; x: number; y: number; size: number; speed: number; over?: boolean };
 
@@ -196,8 +196,8 @@ export default function HomeWall() {
           <h2 className="about-text">{bio}</h2>
         </div>
         <footer className="home-foot">
-          <a className="foot-big" href={`mailto:${EMAIL}`}>
-            Contact me
+          <a className="foot-big" href={INSTAGRAM} target="_blank" rel="noopener noreferrer">
+            Send Me A Direct Message
           </a>
           <span className="label">© 2026 Hanna Baher — THE H</span>
           <Link className="foot-big" href="/archive">
