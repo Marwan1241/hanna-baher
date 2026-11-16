@@ -193,7 +193,7 @@ export default function Book() {
 
   return (
     <div className="archive" ref={root}>
-      <h1 className="sr-only">The Archive — Hannah Baher</h1>
+      <h1 className="sr-only">The Archive — Hanna Baher</h1>
       <div
         className="book-stage"
         onPointerDown={(e) => {
@@ -280,7 +280,7 @@ function Face({ page, idx, near, jump }: { page: Page; idx: number; near: boolea
           <span className="emboss">
             <span className="mono-h" />
           </span>
-          <span className="pg-denim-foot">{page.kind === "cover" ? "Vol. 01 — Hannah Baher" : "THE H"}</span>
+          <span className="pg-denim-foot">{page.kind === "cover" ? "Vol. 01 — Hanna Baher" : "THE H"}</span>
         </div>
       );
     case "endpaper":

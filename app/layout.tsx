@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "THE H — Hannah Baher",
+  title: "THE H — Hanna Baher",
   description:
-    "Hannah Baher is a fashion designer exploring the balance between chaos and calm. Step into the archive of THE H.",
+    "Hanna Baher is a fashion designer exploring the balance between chaos and calm. Step into the archive of THE H.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

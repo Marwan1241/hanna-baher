@@ -54,6 +54,7 @@ export default function HomeWall() {
         const intro = gsap.timeline({ paused: true, defaults: { ease: "expo.out" } });
         intro
           .from(".roll-a .ch", { yPercent: 110, duration: motion ? 1.1 : 0.01, stagger: 0.03, clearProps: "transform" })
+          .from(".archive-badge", { autoAlpha: 0, scale: 0, rotation: -120, duration: motion ? 1 : 0.01, ease: "back.out(1.6)" }, "-=0.8")
           .from(".house", { autoAlpha: 0, y: 16, duration: 0.8 }, "-=0.7")
           .from(".tile-inner", { autoAlpha: 0, scale: motion ? 0.9 : 1, duration: 1.2, stagger: { each: 0.05, from: "random" } }, 0.1);
 
@@ -105,6 +106,7 @@ export default function HomeWall() {
       .timeline({ defaults: { ease: "power3.in" }, onComplete: () => router.push(href) })
       .to(".roll .ch", { yPercent: -110, duration: 0.5, stagger: 0.015 }, 0)
       .to(".house", { autoAlpha: 0, duration: 0.3 }, 0)
+      .to(".archive-badge", { autoAlpha: 0, scale: 0.4, rotation: 90, duration: 0.45 }, 0)
       .to(
         ".tile-inner",
         {
@@ -154,7 +156,7 @@ export default function HomeWall() {
 
   return (
     <div ref={root}>
-      <h1 className="sr-only">THE H — Hannah Baher, fashion designer</h1>
+      <h1 className="sr-only">THE H — Hanna Baher, fashion designer</h1>
 
       <nav className="home-nav" aria-label="Main">
         <Link
@@ -170,6 +172,21 @@ export default function HomeWall() {
             <span className="roll-b">{roll("THE ARCHIVE")}</span>
           </span>
           <span className="sr-only">The Archive</span>
+          {/* "Click me" badge: a slowly turning ring of text around an arrow. */}
+          <span className="archive-badge" aria-hidden>
+            <svg viewBox="0 0 100 100">
+              <path id="badge-ring" d="M50 50m-39 0a39 39 0 1 1 78 0a39 39 0 1 1-78 0" fill="none" />
+              <g className="badge-spin">
+                <text>
+                  <textPath href="#badge-ring" textLength="243" lengthAdjust="spacing">
+                    OPEN · THE ARCHIVE · OPEN · THE ARCHIVE ·
+                  </textPath>
+                </text>
+              </g>
+              <circle className="badge-dot" cx="50" cy="50" r="23" />
+              <path className="badge-arrow" d="M41 59 59 41M45 41h14v14" />
+            </svg>
+          </span>
         </Link>
         <p className="house">
           <span className="house-name">
@@ -197,7 +214,7 @@ export default function HomeWall() {
           <a className="foot-big" href={`mailto:${EMAIL}`}>
             Contact me
           </a>
-          <span className="label">© 2026 Hannah Baher — THE H</span>
+          <span className="label">© 2026 Hanna Baher — THE H</span>
           <Link className="foot-big" href="/archive">
             The Archive →
           </Link>

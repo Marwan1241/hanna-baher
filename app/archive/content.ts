@@ -1,4 +1,4 @@
-// Copy is taken from Hannah's portfolio PDF, with typos corrected.
+// Copy is taken from Hanna's portfolio PDF, with typos corrected.
 
 export type Chapter = {
   slug: string;
