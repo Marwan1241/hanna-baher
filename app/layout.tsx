@@ -1,18 +1,13 @@
 import type { Metadata } from "next";
-import { Archivo, Geist_Mono } from "next/font/google";
+import { Poppins } from "next/font/google";
 import Header from "@/components/Header";
 import Loader from "@/components/Loader";
 import "./globals.css";
 
-const archivo = Archivo({
-  variable: "--font-archivo",
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
-  axes: ["wdth"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["400", "800"],
 });
 
 export const metadata: Metadata = {
@@ -23,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${archivo.variable} ${geistMono.variable} is-loading`}>
+    <html lang="en" className={`${poppins.variable} is-loading`}>
       <body>
         <noscript>
           <style>{`.loader,.loader-mark{display:none!important}html.is-loading{overflow:auto}`}</style>

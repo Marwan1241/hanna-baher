@@ -24,7 +24,6 @@ const TILES: Tile[] = [
   { src: "identity/look-4", w: 896, h: 1344, slug: "identity", alt: "Crouching in the draped black dress", x: 85, y: 116, size: 12, speed: 0.1 },
   { src: "play/collection", w: 1166, h: 1375, slug: "play", alt: "Illustrated Play collection line-up", x: 9, y: 170, size: 16, speed: 0.3, over: true },
   { src: "play/look-5", w: 934, h: 1400, slug: "play", alt: "Orange halter top in a wooden doorway", x: 45, y: 190, size: 14, speed: 0.15 },
-  { src: "autovroom/uniform", w: 1130, h: 1600, slug: "autovroom", alt: "Autovroom working uniform", x: 76, y: 180, size: 15, speed: -0.05 },
   { src: "identity/look-5", w: 896, h: 1344, slug: "identity", alt: "Black dress in warm lamplight", x: 22, y: 230, size: 14, speed: 0.2, over: true },
   { src: "play/look-6", w: 934, h: 1400, slug: "play", alt: "Crouching on a blue patterned rug", x: 58, y: 244, size: 16, speed: 0.1 },
   { src: "barraserb/designs", w: 1130, h: 1600, slug: "barraserb", alt: "Barraserb T-shirt designs", x: 84, y: 232, size: 13, speed: 0.25, over: true },
@@ -54,7 +53,7 @@ export default function HomeWall() {
         const intro = gsap.timeline({ paused: true, defaults: { ease: "expo.out" } });
         intro
           .from(".roll-a .ch", { yPercent: 110, duration: motion ? 1.1 : 0.01, stagger: 0.03, clearProps: "transform" })
-          .from(".archive-badge", { autoAlpha: 0, scale: 0, rotation: -120, duration: motion ? 1 : 0.01, ease: "back.out(1.6)" }, "-=0.8")
+          .from(".archive-line", { scaleX: 0, transformOrigin: "left", duration: motion ? 1 : 0.01, ease: "expo.inOut" }, "-=0.8")
           .from(".house", { autoAlpha: 0, y: 16, duration: 0.8 }, "-=0.7")
           .from(".tile-inner", { autoAlpha: 0, scale: motion ? 0.9 : 1, duration: 1.2, stagger: { each: 0.05, from: "random" } }, 0.1);
 
@@ -106,7 +105,7 @@ export default function HomeWall() {
       .timeline({ defaults: { ease: "power3.in" }, onComplete: () => router.push(href) })
       .to(".roll .ch", { yPercent: -110, duration: 0.5, stagger: 0.015 }, 0)
       .to(".house", { autoAlpha: 0, duration: 0.3 }, 0)
-      .to(".archive-badge", { autoAlpha: 0, scale: 0.4, rotation: 90, duration: 0.45 }, 0)
+      .to(".archive-line", { scaleX: 0, transformOrigin: "right", duration: 0.45 }, 0)
       .to(
         ".tile-inner",
         {
@@ -172,21 +171,7 @@ export default function HomeWall() {
             <span className="roll-b">{roll("THE ARCHIVE")}</span>
           </span>
           <span className="sr-only">The Archive</span>
-          {/* "Click me" badge: a slowly turning ring of text around an arrow. */}
-          <span className="archive-badge" aria-hidden>
-            <svg viewBox="0 0 100 100">
-              <path id="badge-ring" d="M50 50m-39 0a39 39 0 1 1 78 0a39 39 0 1 1-78 0" fill="none" />
-              <g className="badge-spin">
-                <text>
-                  <textPath href="#badge-ring" textLength="243" lengthAdjust="spacing">
-                    OPEN · THE ARCHIVE · OPEN · THE ARCHIVE ·
-                  </textPath>
-                </text>
-              </g>
-              <circle className="badge-dot" cx="50" cy="50" r="23" />
-              <path className="badge-arrow" d="M41 59 59 41M45 41h14v14" />
-            </svg>
-          </span>
+          <span className="archive-line" aria-hidden />
         </Link>
         <p className="house">
           <span className="house-name">

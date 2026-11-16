@@ -59,6 +59,26 @@ for name, x in PHOTOS.items():
     if name != "bio/studio":
         save(img, f"loader/{name.replace('/', '-')}.webp", max_side=600, q=70)
 
+# --- book pages: every PDF half-page, as designed --------------------------
+# Fixes applied in memory only: the PDF misspells "Hanna" (drop the trailing h), and Autovroom is out of the archive.
+for page in PDF:
+    for block in page.get_text("rawdict")["blocks"]:
+        for line in block.get("lines", []):
+            for span in line["spans"]:
+                text = "".join(c["c"] for c in span["chars"]).lower()
+                for k in range(len(text) - 5):
+                    if text[k:k + 6] == "hannah":
+                        page.add_redact_annot(pymupdf.Rect(span["chars"][k + 5]["bbox"]), fill=False)
+    page.apply_redactions(images=pymupdf.PDF_REDACT_IMAGE_NONE, graphics=pymupdf.PDF_REDACT_LINE_ART_NONE)
+PDF[1].draw_rect(pymupdf.Rect(640, 565, 1000, 790), color=None, fill=(1, 1, 1))  # "06 Autovroom" contents entry
+PDF[18].delete_image(801)  # Autovroom page's black ground, which bleeds past the spine onto the closing page
+
+for s in range(len(PDF)):
+    for h, rect in enumerate((HALF_L, HALF_R)):
+        n = 2 * s + h + 1
+        if n != 37:  # Autovroom
+            save(plate(s + 1, rect, zoom=2), f"archive/pages/{n:02}.webp", max_side=1700)
+
 # --- plates (composites rasterized from the page) -------------------------
 PLATES = {
     "identity/reference": (4, HALF_R),
@@ -76,7 +96,6 @@ PLATES = {
     "cairona/stickers": (17, (10, 330, 585, 510)),
     "cairona/mailer": (17, (750, 280, 1030, 600)),
     "barraserb/designs": (18, HALF_R),
-    "autovroom/uniform": (19, HALF_L),
 }
 for name, (page, rect) in PLATES.items():
     save(plate(page, rect), f"archive/{name}.webp", max_side=1600)

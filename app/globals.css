@@ -16,8 +16,7 @@
   --color-paper: var(--paper);
   --color-purple: var(--purple);
   --color-lime: var(--lime);
-  --font-sans: var(--font-archivo);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins);
 }
 
 /* ---------- base ---------- */
@@ -29,7 +28,7 @@ html.is-loading {
   overflow: hidden;
 }
 body {
-  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-family: var(--font-poppins), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
@@ -55,14 +54,12 @@ body::before {
 
 .label,
 .mono {
-  font-family: var(--font-geist-mono), monospace;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .display {
   font-weight: 800;
-  font-stretch: 62%;
   text-transform: uppercase;
 }
 .mono-h {
@@ -86,7 +83,7 @@ body::before {
   left: 0;
   right: 0;
   height: 50.5%;
-  background: var(--ink);
+  background: #fff;
 }
 .loader-panel.top {
   top: 0;
@@ -114,8 +111,7 @@ body::before {
   display: flex;
   justify-content: space-between;
   padding: 20px var(--gutter);
-  color: var(--paper);
-  font-family: var(--font-geist-mono), monospace;
+  color: var(--ink);
   font-size: 11px;
   letter-spacing: 0.14em;
   font-variant-numeric: tabular-nums;
@@ -127,8 +123,7 @@ body::before {
   top: 50%;
   width: min(34vw, 220px);
   translate: -50% -50%;
-  color: #fff;
-  mix-blend-mode: difference;
+  color: var(--purple);
   clip-path: inset(0 100% 0 0);
   pointer-events: none;
 }
@@ -193,8 +188,7 @@ html.is-loading .header-mark {
   pointer-events: auto;
   display: block;
   font-weight: 800;
-  font-stretch: 62%;
-  font-size: clamp(3.4rem, 14.5vw, 15rem);
+  font-size: clamp(2.6rem, 12vw, 13rem);
   line-height: 0.82;
   letter-spacing: -0.01em;
 }
@@ -232,82 +226,22 @@ html.is-loading .header-mark {
   outline: none;
 }
 
-/* Clickable cue: a turning text ring pinned to the word's corner; fills purple on hover. */
-.archive-badge {
+/* Clickable cue: a plain underline under the word. */
+.archive-line {
   position: absolute;
-  top: -0.34em;
-  right: -0.3em;
-  width: max(64px, 0.58em);
-  aspect-ratio: 1;
-}
-.archive-badge svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-.archive-badge text {
-  fill: currentColor;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 9.5px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-}
-.badge-spin {
-  transform-box: view-box;
-  transform-origin: 50% 50%;
-  animation: badge-spin 14s linear infinite;
-}
-.badge-dot {
-  fill: var(--purple);
-  transform-box: view-box;
-  transform-origin: 50% 50%;
-  scale: 0;
-  transition: scale 0.5s var(--ease-out);
-}
-.badge-arrow {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.6;
-  stroke-linecap: square;
-  transition:
-    translate 0.5s var(--ease-out),
-    stroke 0.3s;
-}
-.archive-link:focus-visible .badge-dot {
-  scale: 1;
-}
-.archive-link:focus-visible .badge-arrow {
-  stroke: var(--paper);
-  translate: 2px -2px;
+  left: 0.02em;
+  right: 0.02em;
+  bottom: -0.02em;
+  height: max(2px, 0.05em);
+  background: currentColor;
 }
 @media (hover: hover) {
-  .archive-link:hover .badge-dot {
-    scale: 1;
-  }
-  .archive-link:hover .badge-arrow {
-    stroke: var(--paper);
-    translate: 2px -2px;
+  .archive-link:hover .archive-line {
+    background: var(--purple);
   }
 }
-@media (max-width: 767px) {
-  /* the word is small on phones: lift the badge clear of the letters */
-  .archive-badge {
-    top: auto;
-    bottom: 88%;
-    right: -0.1em;
-    width: 84px;
-  }
-}
-@keyframes badge-spin {
-  to {
-    rotate: 360deg;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .badge-spin {
-    animation: none;
-  }
+.archive-link:focus-visible .archive-line {
+  background: var(--purple);
 }
 
 /* The House: present, dimmed, deliberately inert. */
@@ -324,7 +258,6 @@ html.is-loading .header-mark {
   align-items: center;
   gap: 0.28em;
   font-weight: 800;
-  font-stretch: 62%;
   font-size: clamp(1.3rem, 3.6vw, 3.1rem);
   line-height: 1;
   text-transform: uppercase;
@@ -335,7 +268,6 @@ html.is-loading .header-mark {
   translate: 0 -0.04em;
 }
 .house-soon {
-  font-family: var(--font-geist-mono), monospace;
   font-size: 9px;
   letter-spacing: 0.34em;
   text-transform: uppercase;
@@ -383,7 +315,6 @@ html.is-loading .header-mark {
 .tile-cap {
   display: block;
   margin-top: 8px;
-  font-family: var(--font-geist-mono), monospace;
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -419,9 +350,8 @@ html.is-loading .header-mark {
 }
 .about-text {
   font-weight: 800;
-  font-stretch: 62%;
-  font-size: clamp(1.7rem, 4.6vw, 4.8rem);
-  line-height: 0.94;
+  font-size: clamp(1.4rem, 3.8vw, 4rem);
+  line-height: 1.02;
   text-transform: uppercase;
   text-wrap: balance;
 }
@@ -434,7 +364,6 @@ html.is-loading .header-mark {
 }
 .foot-big {
   font-weight: 800;
-  font-stretch: 62%;
   font-size: clamp(1.9rem, 4vw, 3.8rem);
   line-height: 0.9;
   text-transform: uppercase;
@@ -519,7 +448,6 @@ html.is-loading .header-mark {
   left: 50%;
   width: var(--pw);
   height: 100%;
-  transform-style: preserve-3d;
 }
 .book[data-mode="single"] .leaf {
   left: 0;
@@ -528,28 +456,20 @@ html.is-loading .header-mark {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   container-type: size;
 }
+/* the leaf is flat, so the back is mirrored to read correctly once the leaf has turned */
 .face.back {
-  transform: rotateY(180deg);
+  transform: scaleX(-1);
+}
+.leaf[data-turned] .face.front,
+.leaf:not([data-turned]) .face.back {
+  visibility: hidden;
 }
 /* a native image drag would swallow the pointerup that a swipe needs */
 .face img {
   pointer-events: none;
   -webkit-user-drag: none;
-}
-/* gutter shadow at the spine */
-.face::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(to right, rgb(0 0 0 / 0.16), transparent 7%);
-}
-.face.back::after {
-  background: linear-gradient(to left, rgb(0 0 0 / 0.16), transparent 7%);
 }
 .shade {
   position: absolute;
@@ -563,93 +483,14 @@ html.is-loading .header-mark {
   background: linear-gradient(to right, rgb(0 0 0 / 0.9), transparent 70%);
 }
 
-/* ---------- archive: page templates (sized to the page via container units) ---------- */
+/* ---------- archive: pages (sized to the page via container units) ---------- */
 .pg {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: 7cqw;
-  background: #fbfaf7;
+  background: #fff;
 }
-.pg-paper {
-  background: #fbfaf7;
-  color: var(--ink);
-}
-.pg-ink {
-  background: var(--ink);
-  color: var(--paper);
-}
-.pg-top {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 2.3cqw;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.pg-title {
-  font-weight: 800;
-  font-stretch: 62%;
-  font-size: 15cqw;
-  line-height: 0.84;
-  letter-spacing: -0.01em;
-  text-transform: uppercase;
-}
-.pg-kicker {
-  margin-top: 3cqw;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 2.5cqw;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.7;
-}
-.pg-opener {
-  justify-content: space-between;
-  gap: 5cqw;
-  padding-bottom: 11cqw;
-}
-.pg-body {
-  display: grid;
-  gap: 1em;
-  max-width: 92%;
-  font-size: max(11px, 3.05cqw);
-  line-height: 1.45;
-}
-.pg-folio {
-  position: absolute;
-  bottom: 4.5cqw;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 2.2cqw;
-  opacity: 0.5;
-}
-.pg-folio.is-left {
-  left: 7cqw;
-}
-.pg-folio.is-right {
-  right: 7cqw;
-}
-.pg-cap {
-  position: absolute;
-  left: 7cqw;
-  right: 7cqw;
-  bottom: 5cqw;
-  z-index: 1;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: max(9px, 2.2cqw);
-  line-height: 1.5;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.pg-cap.on-photo {
-  color: #fff;
-  text-shadow: 0 1px 10px rgb(0 0 0 / 0.55);
-}
-.pg-plate {
-  position: absolute;
-  inset: 9cqw 7cqw 30cqw;
-}
-
 .pg-denim {
   align-items: center;
   justify-content: center;
@@ -662,7 +503,6 @@ html.is-loading .header-mark {
   position: absolute;
   left: 0;
   right: 0;
-  font-family: var(--font-geist-mono), monospace;
   font-size: 2.4cqw;
   letter-spacing: 0.32em;
   text-transform: uppercase;
@@ -681,111 +521,6 @@ html.is-loading .header-mark {
 .pg-denim.is-back .emboss {
   width: 14cqw;
 }
-.pg-linen {
-  align-items: center;
-  justify-content: center;
-  background: var(--lime) url(/brand/linen.webp) center / cover;
-  color: #5b2a77;
-}
-.pg-exlibris {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 2.3cqw;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  opacity: 0.75;
-}
-
-.pg-index .pg-title {
-  margin-top: 12cqw;
-  font-size: 13cqw;
-}
-.pg-index ol {
-  margin-top: 8cqw;
-  border-top: 1px solid currentColor;
-}
-.pg-index button {
-  width: 100%;
-  display: grid;
-  grid-template-columns: auto auto 1fr auto;
-  align-items: baseline;
-  gap: 2.4cqw;
-  padding: 2.8cqw 0;
-  border-bottom: 1px solid rgb(0 0 0 / 0.14);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 2.4cqw;
-  letter-spacing: 0.1em;
-  text-align: left;
-  cursor: pointer;
-  transition: color 0.3s;
-}
-.pg-index button:hover,
-.pg-index button:focus-visible {
-  color: var(--purple);
-}
-.idx-title {
-  font-family: var(--font-archivo), sans-serif;
-  font-weight: 800;
-  font-stretch: 62%;
-  font-size: 5.6cqw;
-  line-height: 1;
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-.idx-dots {
-  border-bottom: 1px dotted currentColor;
-  opacity: 0.35;
-}
-.pg-note {
-  margin-top: auto;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 2.2cqw;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0.6;
-}
-
-.pg-palette ul {
-  margin: auto 0;
-  display: grid;
-  gap: 2.6cqw;
-}
-.pg-palette li {
-  display: grid;
-  grid-template-columns: 24cqw 1fr auto;
-  align-items: center;
-  gap: 3cqw;
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 2.4cqw;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.swatch {
-  height: 12cqw;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
-}
-
-.pg-closing {
-  justify-content: center;
-  gap: 7cqw;
-}
-.pg-closing p {
-  font-size: max(11px, 3.1cqw);
-  line-height: 1.55;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.pg-sign {
-  width: 16cqw;
-}
-.pg-closing a {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 2.4cqw;
-  letter-spacing: 0.08em;
-  transition: color 0.3s;
-}
-.pg-closing a:hover {
-  color: var(--purple);
-}
 .pg-watermark {
   width: 26cqw;
   margin: auto;
@@ -800,7 +535,6 @@ html.is-loading .header-mark {
   align-items: center;
   gap: clamp(10px, 2vw, 28px);
   padding: 14px var(--gutter) max(18px, env(safe-area-inset-bottom));
-  font-family: var(--font-geist-mono), monospace;
   font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;

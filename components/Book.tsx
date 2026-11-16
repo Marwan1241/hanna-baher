@@ -4,11 +4,9 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
-import { book, chapters, closing, type Page } from "@/app/archive/content";
-import { EMAIL } from "@/components/Header";
+import { book, chapters, END, type Page } from "@/app/archive/content";
 
 const { pages, starts } = book;
-const CLOSING = pages.findIndex((p) => p.kind === "closing");
 // Spreads on wide screens and on landscape phones; single pages on portrait phones/tablets.
 const WIDE = "(min-width: 900px), (orientation: landscape) and (min-width: 640px)";
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -51,6 +49,10 @@ export default function Book() {
     const rot = gsap.getProperty(el, "rotationY") as number;
     el.style.zIndex = String((flying ? 2 * n : 0) + (rot < -90 ? i + 1 : n - i));
     el.style.setProperty("--shade", String(Math.sin((-rot * Math.PI) / 180) * 0.35));
+    // Leaves are flat and show one face at a time: Safari mis-draws preserve-3d + backface-visibility (blank pages on iPhone).
+    el.toggleAttribute("data-turned", rot < -90);
+    // Only leaves near the open page or in flight are drawn; ~80 full-page layers stall iOS Safari.
+    el.style.display = flying || Math.abs(i - curRef.current) <= 2 ? "" : "none";
     if (!wideRef.current) el.style.opacity = String(gsap.utils.clamp(0, 1, (180 + rot) / 60));
   };
 
@@ -108,6 +110,7 @@ export default function Book() {
           });
         });
         curRef.current = to;
+        els.forEach((el, i) => paint(el, i, list.includes(i) || gsap.isTweening(el))); // reveal the target, lift the leaves about to turn
         setCur(to);
         gsap.to(bookEl.current, { xPercent: shift(to), duration: reduce.current ? 0 : 1, ease: "power2.inOut", overwrite: "auto" });
       });
@@ -140,7 +143,7 @@ export default function Book() {
         0.2,
       )
         .from(".rail", { autoAlpha: 0, y: 20, duration: 0.6, ease: "power2.out" }, "-=0.6")
-        .call(() => flipTo(leafFor(2, wideRef.current)), [], "-=0.2"); // open on the index
+        .call(() => flipTo(leafFor(1, wideRef.current)), [], "-=0.2"); // open on the PDF's first spread
       const toHash = () => {
         const slug = location.hash.slice(1);
         if (starts[slug] !== undefined) flipTo(leafFor(starts[slug], wideRef.current));
@@ -179,7 +182,7 @@ export default function Book() {
   const jump = (slug: string) => flipTo(leafFor(starts[slug], wide));
 
   const pageNow = wide ? Math.max(0, 2 * cur - 1) : cur;
-  const active = pageNow < CLOSING ? [...chapters].reverse().find((c) => starts[c.slug] <= pageNow) : undefined;
+  const active = pageNow < END ? [...chapters].reverse().find((c) => starts[c.slug] <= pageNow) : undefined;
   const max = maxFor(wide);
   const label = wide
     ? cur === 0
@@ -223,11 +226,11 @@ export default function Book() {
             return (
               <div className="leaf" key={`${wide}-${i}`}>
                 <div className="face front">
-                  <Face page={pages[front]} idx={front} near={near} jump={jump} />
+                  <Face page={pages[front]} near={near} />
                   <i className="shade" />
                 </div>
                 <div className="face back">
-                  {back < 0 ? <div className="pg" /> : <Face page={pages[back]} idx={back} near={near} jump={jump} />}
+                  {back < 0 ? <div className="pg" /> : <Face page={pages[back]} near={near} />}
                   <i className="shade" />
                 </div>
               </div>
@@ -265,12 +268,7 @@ export default function Book() {
   );
 }
 
-function Face({ page, idx, near, jump }: { page: Page; idx: number; near: boolean; jump: (slug: string) => void }) {
-  const side = idx % 2 ? "is-left" : "is-right";
-  const folio = <span className={`pg-folio ${side}`}>{pad(idx)}</span>;
-  const img = (src: string, alt: string, fit: "cover" | "contain") =>
-    near && <Image src={src} alt={alt} fill sizes="(min-width: 900px) 36vw, 90vw" className={fit === "cover" ? "object-cover" : "object-contain"} />;
-
+function Face({ page, near }: { page: Page; near: boolean }) {
   switch (page.kind) {
     case "cover":
     case "back":
@@ -283,105 +281,15 @@ function Face({ page, idx, near, jump }: { page: Page; idx: number; near: boolea
           <span className="pg-denim-foot">{page.kind === "cover" ? "Vol. 01 — Hanna Baher" : "THE H"}</span>
         </div>
       );
-    case "endpaper":
+    case "pdf":
       return (
-        <div className="pg pg-linen">
-          <span className="pg-exlibris">Ex libris — THE H</span>
-        </div>
-      );
-    case "index":
-      return (
-        <div className="pg pg-paper pg-index">
-          <div className="pg-top">
-            <span>Index</span>
-            <span>Vol. 01</span>
-          </div>
-          <h2 className="pg-title">
-            From the
-            <br />
-            Archive
-          </h2>
-          <ol>
-            {chapters.map((c) => (
-              <li key={c.slug}>
-                <button type="button" onClick={() => jump(c.slug)}>
-                  <span>{c.no}</span>
-                  <span className="idx-title">{c.title}</span>
-                  <span className="idx-dots" />
-                  <span>{pad(starts[c.slug])}</span>
-                </button>
-              </li>
-            ))}
-          </ol>
-          <p className="pg-note">Past work I keep returning to.</p>
-          {folio}
-        </div>
-      );
-    case "opener": {
-      const c = page.chapter;
-      return (
-        <div className={`pg pg-opener ${c.tone === "ink" ? "pg-ink" : "pg-paper"}`}>
-          <div className="pg-top">
-            <span>Chapter {c.no}</span>
-            <span>The Archive</span>
-          </div>
-          <div>
-            <h2 className="pg-title">{c.title}</h2>
-            <p className="pg-kicker">{c.kicker}</p>
-          </div>
-          <div className="pg-body">
-            {c.body.map((p) => (
-              <p key={p.slice(0, 24)}>{p}</p>
-            ))}
-          </div>
-          {folio}
-        </div>
-      );
-    }
-    case "photo":
-      return (
-        <div className="pg pg-ink">
-          {img(page.src, page.alt, "cover")}
-          {page.caption && <span className="pg-cap on-photo">{page.caption}</span>}
-        </div>
-      );
-    case "plate":
-      return (
-        <div className={`pg ${page.tone === "ink" ? "pg-ink" : "pg-paper"}`}>
-          <div className={page.fit === "contain" ? "pg-plate" : "absolute inset-0"}>{img(page.src, page.alt, page.fit)}</div>
-          {page.caption && <span className={`pg-cap ${page.fit === "cover" ? "on-photo" : ""}`}>{page.caption}</span>}
-        </div>
-      );
-    case "palette":
-      return (
-        <div className="pg pg-paper pg-palette">
-          <div className="pg-top">
-            <span>{page.caption}</span>
-          </div>
-          <ul>
-            {page.colors.map(([name, hex]) => (
-              <li key={hex}>
-                <span className="swatch" style={{ background: hex }} />
-                <span>{name}</span>
-                <span>{hex.toUpperCase()}</span>
-              </li>
-            ))}
-          </ul>
-          {folio}
-        </div>
-      );
-    case "closing":
-      return (
-        <div className="pg pg-paper pg-closing">
-          <p>{closing}</p>
-          <span className="mono-h pg-sign" />
-          <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
-          {folio}
+        <div className="pg">
+          {near && <Image src={page.src} alt={page.alt} fill sizes="(min-width: 900px) 36vw, 90vw" className="object-cover" />}
         </div>
       );
     default:
       return (
-        <div className="pg pg-paper">
+        <div className="pg">
           <span className="mono-h pg-watermark" />
         </div>
       );
